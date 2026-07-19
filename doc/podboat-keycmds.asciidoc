@@ -1,0 +1,39 @@
+_pb-quit_ (default key: _kbd:[Q]_)::
+         Quit the program.
+
+_pb-hard-quit_ (default key: _kbd:[Shift+Q]_)::
+         Quit the program without confirmation.
+
+_pb-help_ (default key: _kbd:[?]_)::
+         Show the help screen.
+
+_pb-download_ (default key: _kbd:[D]_)::
+         Download the currently selected URL.
+
+_pb-cancel_ (default key: _kbd:[C]_)::
+         Cancel the currently selected download.
+
+_pb-play_ (default key: _kbd:[P]_)::
+         Start player with currently selected download.
+
+_pb-mark-as-finished_ (default key: _kbd:[M]_)::
+         Mark currently selected entry as finished.
+
+_pb-delete_ (default key: _kbd:[Shift+D]_)::
+         Delete the currently selected URL from the queue.
+
+_pb-reload_ (default key: _kbd:[Ctrl+R]_)::
+         Load URLs that were newly added to the queue.
+
+_pb-purge_ (default key: _kbd:[Shift+P]_)::
+         Remove all finished and deleted downloads from the queue and load URLs that were newly added to the queue.
+
+_pb-toggle-download-all_ (default key: _kbd:[A]_)::
+         Toggle the "automatic download" feature where all queued URLs are downloaded one after the other. The <<podboat-max-downloads,`max-downloads`>> configuration option controls how many downloads are done in parallel.
+
+_pb-increase-max-dls_ (default key: _kbd:[+]_)::
+         Increase the <<podboat-max-downloads,`max-downloads`>> option by 1.
+
+_pb-decrease-max-dls_ (default key: _kbd:[-]_)::
+         Decrease the <<podboat-max-downloads,`max-downloads`>> option by 1. If the option is already 1, no further decrease is possible.
+

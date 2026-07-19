@@ -1,0 +1,145 @@
+:experimental:
+
+'''
+[[pb-quit]]
+****
+*Operation:* <<pb-quit,pb-quit>> +
+*Default key:* kbd:[Q] +
+****
+
+Quit the program. +
+
+
+
+'''
+[[pb-hard-quit]]
+****
+*Operation:* <<pb-hard-quit,pb-hard-quit>> +
+*Default key:* kbd:[Shift+Q] +
+****
+
+Quit the program without confirmation. +
+
+
+
+'''
+[[pb-help]]
+****
+*Operation:* <<pb-help,pb-help>> +
+*Default key:* kbd:[?] +
+****
+
+Show the help screen. +
+
+
+
+'''
+[[pb-download]]
+****
+*Operation:* <<pb-download,pb-download>> +
+*Default key:* kbd:[D] +
+****
+
+Download the currently selected URL. +
+
+
+
+'''
+[[pb-cancel]]
+****
+*Operation:* <<pb-cancel,pb-cancel>> +
+*Default key:* kbd:[C] +
+****
+
+Cancel the currently selected download. +
+
+
+
+'''
+[[pb-play]]
+****
+*Operation:* <<pb-play,pb-play>> +
+*Default key:* kbd:[P] +
+****
+
+Start player with currently selected download. +
+
+
+
+'''
+[[pb-mark-as-finished]]
+****
+*Operation:* <<pb-mark-as-finished,pb-mark-as-finished>> +
+*Default key:* kbd:[M] +
+****
+
+Mark currently selected entry as finished. +
+
+
+
+'''
+[[pb-delete]]
+****
+*Operation:* <<pb-delete,pb-delete>> +
+*Default key:* kbd:[Shift+D] +
+****
+
+Delete the currently selected URL from the queue. +
+
+
+
+'''
+[[pb-reload]]
+****
+*Operation:* <<pb-reload,pb-reload>> +
+*Default key:* kbd:[Ctrl+R] +
+****
+
+Load URLs that were newly added to the queue. +
+
+
+
+'''
+[[pb-purge]]
+****
+*Operation:* <<pb-purge,pb-purge>> +
+*Default key:* kbd:[Shift+P] +
+****
+
+Remove all finished and deleted downloads from the queue and load URLs that were newly added to the queue. +
+
+
+
+'''
+[[pb-toggle-download-all]]
+****
+*Operation:* <<pb-toggle-download-all,pb-toggle-download-all>> +
+*Default key:* kbd:[A] +
+****
+
+Toggle the "automatic download" feature where all queued URLs are downloaded one after the other. The <<podboat-max-downloads,`max-downloads`>> configuration option controls how many downloads are done in parallel. +
+
+
+
+'''
+[[pb-increase-max-dls]]
+****
+*Operation:* <<pb-increase-max-dls,pb-increase-max-dls>> +
+*Default key:* kbd:[+] +
+****
+
+Increase the <<podboat-max-downloads,`max-downloads`>> option by 1. +
+
+
+
+'''
+[[pb-decrease-max-dls]]
+****
+*Operation:* <<pb-decrease-max-dls,pb-decrease-max-dls>> +
+*Default key:* kbd:[-] +
+****
+
+Decrease the <<podboat-max-downloads,`max-downloads`>> option by 1. If the option is already 1, no further decrease is possible. +
+
+
+

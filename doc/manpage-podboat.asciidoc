@@ -61,6 +61,10 @@ include::chapter-podboat.asciidoc[]
 
 include::podboat-cfgcmds.asciidoc[]
 
+== AVAILABLE OPERATIONS
+
+include::podboat-keycmds.asciidoc[]
+
 == FORMAT STRINGS
 
 include::chapter-format-strings.asciidoc[]

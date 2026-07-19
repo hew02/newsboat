@@ -255,6 +255,9 @@ doc/configcommands-linked.asciidoc: doc/configcommands.dsv
 doc/availableoperations-linked.asciidoc: doc/keycmds.dsv
 	awk -f doc/createAvailableOperationsListView.awk doc/keycmds.dsv > doc/availableoperations-linked.asciidoc
 
+doc/podboat-availableoperations-linked.asciidoc: doc/podboat-keycmds.dsv
+	awk -f doc/createAvailableOperationsListView.awk doc/podboat-keycmds.dsv > doc/podboat-availableoperations-linked.asciidoc
+
 doc/podboat-cmds-linked.asciidoc: doc/podboat-cmds.dsv
 	awk -f doc/createPodboatConfigurationCommandsListView.awk doc/podboat-cmds.dsv > doc/podboat-cmds-linked.asciidoc
 
@@ -276,6 +279,7 @@ doc/xhtml/newsboat.html: doc/chapter-dialog-titles.asciidoc
 doc/xhtml/newsboat.html: doc/chapter-killfiles.asciidoc
 doc/xhtml/newsboat.html: doc/configcommands-linked.asciidoc
 doc/xhtml/newsboat.html: doc/availableoperations-linked.asciidoc
+doc/xhtml/newsboat.html: doc/podboat-availableoperations-linked.asciidoc
 doc/xhtml/newsboat.html: doc/podboat-cmds-linked.asciidoc
 doc/xhtml/newsboat.html: doc/cmdline-commands-linked.asciidoc
 
@@ -287,6 +291,9 @@ doc/newsboat-cfgcmds.asciidoc: doc/configcommands.dsv
 
 doc/newsboat-keycmds.asciidoc: doc/keycmds.dsv
 	awk -f doc/createKeyCommandsListView.awk doc/keycmds.dsv > doc/newsboat-keycmds.asciidoc
+
+doc/podboat-keycmds.asciidoc: doc/podboat-keycmds.dsv
+	awk -f doc/createKeyCommandsListView.awk doc/podboat-keycmds.dsv > doc/podboat-keycmds.asciidoc
 
 doc/$(NEWSBOAT).1: doc/manpage-newsboat.asciidoc doc/chapter-firststeps.asciidoc \
 		doc/newsboat-cfgcmds.asciidoc doc/newsboat-keycmds.asciidoc \
@@ -303,7 +310,7 @@ doc/podboat-cfgcmds.asciidoc: doc/podboat-cmds.dsv
 
 doc/$(PODBOAT).1: doc/manpage-podboat.asciidoc \
 		doc/chapter-podcasts.asciidoc doc/chapter-podboat.asciidoc \
-		doc/podboat-cfgcmds.asciidoc \
+		doc/podboat-cfgcmds.asciidoc doc/podboat-keycmds.asciidoc \
 		doc/chapter-environment-variables.asciidoc \
 		doc/chapter-format-strings.asciidoc doc/chapter-files.asciidoc \
 		doc/man.rb

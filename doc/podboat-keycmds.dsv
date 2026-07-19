@@ -1,0 +1,13 @@
+pb-quit||kbd:[Q]||Quit the program.
+pb-hard-quit||kbd:[Shift+Q]||Quit the program without confirmation.
+pb-help||kbd:[?]||Show the help screen.
+pb-download||kbd:[D]||Download the currently selected URL.
+pb-cancel||kbd:[C]||Cancel the currently selected download.
+pb-play||kbd:[P]||Start player with currently selected download.
+pb-mark-as-finished||kbd:[M]||Mark currently selected entry as finished.
+pb-delete||kbd:[Shift+D]||Delete the currently selected URL from the queue.
+pb-reload||kbd:[Ctrl+R]||Load URLs that were newly added to the queue.
+pb-purge||kbd:[Shift+P]||Remove all finished and deleted downloads from the queue and load URLs that were newly added to the queue.
+pb-toggle-download-all||kbd:[A]||Toggle the "automatic download" feature where all queued URLs are downloaded one after the other. The <<podboat-max-downloads,`max-downloads`>> configuration option controls how many downloads are done in parallel.
+pb-increase-max-dls||kbd:[+]||Increase the <<podboat-max-downloads,`max-downloads`>> option by 1.
+pb-decrease-max-dls||kbd:[-]||Decrease the <<podboat-max-downloads,`max-downloads`>> option by 1. If the option is already 1, no further decrease is possible.
