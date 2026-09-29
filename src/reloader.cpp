@@ -66,6 +66,7 @@ bool Reloader::trylock_reload_mutex()
 
 void Reloader::reload(unsigned int pos,
 	CurlHandle& easyhandle,
+	std::string& errmsg,
 	bool show_progress,
 	bool unattended)
 {
@@ -79,10 +80,13 @@ void Reloader::reload(unsigned int pos,
 		// (e.g.  Reloader::reload_all() calling View::prepare_query_feed())
 		if (oldfeed->is_query_feed()) {
 			LOG(Level::DEBUG, "Reloader::reload: skipping query feed");
+			errmsg = strprintf::fmt(
+					_("%s '%s'"),
+					"skipping query feed",
+					utils::censor_url(oldfeed->rssurl()));
 			return;
 		}
 
-		std::string errmsg;
 		std::shared_ptr<AutoDiscardMessage> message_lifetime;
 		if (!unattended) {
 			const std::string progress = show_progress ?
@@ -145,7 +149,9 @@ void Reloader::reload(unsigned int pos,
 		}
 		if (!errmsg.empty()) {
 			oldfeed->set_status(DlStatus::DL_ERROR);
-			ctrl.get_view()->get_statusline().show_error(errmsg);
+			if (!unattended) {
+				ctrl.get_view()->get_statusline().show_error(errmsg);
+			}
 			LOG(Level::USERERROR, "%s", errmsg);
 		}
 	} else {
@@ -257,6 +263,7 @@ void Reloader::reload_indexes_impl(std::vector<unsigned int> indexes, bool unatt
 
 	partition_reload_to_threads([&](unsigned int start, unsigned int end) {
 		CurlHandle easyhandle;
+		std::string errmsg;
 		for (auto i = start; i <= end; ++i) {
 			// Reset any options set on the handle before next reload
 			curl_easy_reset(easyhandle.ptr());
@@ -265,7 +272,7 @@ void Reloader::reload_indexes_impl(std::vector<unsigned int> indexes, bool unatt
 			LOG(Level::DEBUG,
 				"Reloader::reload_indexes_impl: reloading feed #%u",
 				feed_index);
-			reload(feed_index, easyhandle, true, unattended);
+			reload(feed_index, easyhandle, errmsg, true, unattended);
 		}
 	}, indexes.size());
 }

@@ -909,7 +909,23 @@ int Controller::execute_commands(const std::vector<std::string>& cmds)
 	if (v->formaction_stack_size() > 0) {
 		v->pop_current_formaction();
 	}
-	for (const auto& cmd : cmds) {
+
+    /*std::vector<int> v{1, 2, 3, 4, 5};
+    auto it = v.begin();
+
+    // Skip the next element
+    it = std::next(it); // Now it points to 2
+    std::cout << *it << std::endl; // Outputs: 2
+
+    it = std::next(it); // Now it points to 3
+    std::cout << *it << std::endl; // Outputs: 3
+
+		*/
+
+	//for (const auto& cmd : cmds) {
+  for (auto it = cmds.cbegin(); it != cmds.cend(); ++it) {
+    const std::string& cmd = *it;
+
 		LOG(Level::DEBUG,
 			"Controller::execute_commands: executing `%s'",
 			cmd);
@@ -918,6 +934,51 @@ int Controller::execute_commands(const std::vector<std::string>& cmds)
 		} else if (cmd == "print-unread") {
 			std::cout << strprintf::fmt(_("%u unread articles"),
 					feedcontainer.unread_item_count())
+				<< std::endl;
+		} else if (cmd == "reload-feed") {
+			unsigned int pos;
+			it = std::next(it);
+			if (it == cmds.cend()) {
+				std::cerr
+						<< strprintf::fmt(_("%s: no argument provided to %s"),
+								"newsboat",
+								cmd)
+							<< std::endl;
+				return EXIT_FAILURE;
+			}
+
+			const std::string &arg = *it;
+			try {
+		 		pos = std::stoi(arg);
+			} catch (const std::invalid_argument&) {
+				std::cerr
+						<< strprintf::fmt(_("the index value '%s' is not valid"),
+								arg)
+							<< std::endl;
+				return EXIT_FAILURE;
+			}
+
+			if (pos <= 0 || pos > feedcontainer.feeds_size()) {
+				std::cerr
+						<< strprintf::fmt(_("'%d' is not a valid feed index"),
+								pos)
+							<< std::endl;
+				return EXIT_FAILURE;
+			}
+
+			std::string errmsg;
+			reloader->reload(pos - 1, errmsg, true);
+
+			if (!errmsg.empty()) {
+				std::cerr
+					<< strprintf::fmt(_("%s"),
+							errmsg)
+						<< std::endl;
+				return EXIT_FAILURE;
+			}
+			std::shared_ptr<RssFeed> feed = feedcontainer.get_feed(pos);
+			std::cout << strprintf::fmt(_("reloaded feed '%s'"),
+					feed->title())
 				<< std::endl;
 		} else {
 			std::cerr

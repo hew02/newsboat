@@ -35,8 +35,20 @@ public:
 	/// feedscontainer). Only updates status bar if \a unattended is false.
 	void reload(unsigned int pos, bool unattended = false)
 	{
+		std::string errmsg;
+		reload(pos, errmsg, unattended);
+	}
+
+	/// \brief Reloads given feed.
+	///
+	/// Reloads the feed at position \a pos in the feeds list (as kept by
+	/// feedscontainer). Only updates status bar if \a unattended is false.
+	/// Stores an error message in \a errmsg if the feed cannot be reloaded.
+	void reload(unsigned int pos, std::string& errmsg, bool unattended = false)
+	{
 		CurlHandle easyHandle;
-		reload(pos, easyHandle, false, unattended);
+		errmsg.clear();
+		reload(pos, easyHandle, errmsg, false, unattended);
 	}
 
 	/// \brief Reloads all feeds, spawning threads as necessary.
@@ -67,6 +79,7 @@ private:
 	/// a temporary handle which is destroyed before returning from it.
 	void reload(unsigned int pos,
 		CurlHandle& easyhandle,
+		std::string& errmsg,
 		bool show_progress,
 		bool unattended);
 
