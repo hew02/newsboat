@@ -162,6 +162,7 @@ TEST_CASE("import() populates UrlReader with URLs from the OPML file", "[Opml]")
 	combinedUrls.insert(testUrls.cbegin(), testUrls.cend());
 	combinedUrls.insert(opmlUrls.cbegin(), opmlUrls.cend());
 
+	urlcfg.reload();
 	REQUIRE(urlcfg.get_urls().size() == combinedUrls.size());
 
 	for (const auto& feed_url : urlcfg.get_urls()) {
@@ -175,8 +176,9 @@ TEST_CASE("import() populates UrlReader with URLs from the OPML file", "[Opml]")
 	}
 }
 
-TEST_CASE("import() turns URLs that start with a pipe symbol (\"|\") "
-	"into `exec:` URLs (Liferea convention)", "[Opml]")
+TEST_CASE("import() skips URLs that start with a pipe symbol (\"|\") "
+	"for security instead of turning them into `exec:` URLs",
+	"[Opml]")
 {
 	test_helpers::TempFile urlsFile;
 
@@ -192,11 +194,15 @@ TEST_CASE("import() turns URLs that start with a pipe symbol (\"|\") "
 	using URL = std::string;
 	using Tag = std::string;
 	using Tags = std::vector<Tag>;
+	// The Liferea-style pipe URL ("|~/fetch_tweets.py") is dropped so
+	// that importing a shared OPML file cannot inject an `exec:` URL
+	// that runs arbitrary commands on feed refresh. Only the regular
+	// feed URL is imported.
 	const std::map<URL, Tags> opmlUrls {
-		{"exec:~/fetch_tweets.py", {"~Birdsite search"}},
 		{"https://example.com/feed.atom", {"~example.com website (Atom feed)", "tagged"}},
 	};
 
+	urlcfg.reload();
 	REQUIRE(urlcfg.get_urls().size() == opmlUrls.size());
 
 	for (const auto& feed_url : urlcfg.get_urls()) {
@@ -210,8 +216,8 @@ TEST_CASE("import() turns URLs that start with a pipe symbol (\"|\") "
 	}
 }
 
-TEST_CASE("import() turns \"filtercmd\" attribute into a `filter:` URL "
-	"(appears to be Liferea convention)",
+TEST_CASE("import() ignores the \"filtercmd\" attribute for security and "
+	"keeps the URL as a regular feed",
 	"[Opml]")
 {
 	test_helpers::TempFile urlsFile;
@@ -228,11 +234,16 @@ TEST_CASE("import() turns \"filtercmd\" attribute into a `filter:` URL "
 	using URL = std::string;
 	using Tag = std::string;
 	using Tags = std::vector<Tag>;
+	// The "filtercmd" attribute is dropped so that importing a shared
+	// OPML file cannot inject a `filter:` URL that runs arbitrary
+	// commands on feed refresh. The outline's own xmlUrl is still
+	// imported as a regular feed subscription.
 	const std::map<URL, Tags> opmlUrls {
 		{"https://example.com/another_feed.atom", {"~example.com website (Atom feed)", "misc"}},
-		{"filter:~/.bin/keep_interesting.pl:https://example.com/firehose", {"~Firehose"}},
+		{"https://example.com/firehose", {"~Firehose"}},
 	};
 
+	urlcfg.reload();
 	REQUIRE(urlcfg.get_urls().size() == opmlUrls.size());
 
 	for (const auto& feed_url : urlcfg.get_urls()) {
@@ -292,6 +303,7 @@ TEST_CASE("import() skips URLs that are already present in UrlReader",
 	combinedUrls.insert(testUrls.cbegin(), testUrls.cend());
 	combinedUrls.insert(opmlUrls.cbegin(), opmlUrls.cend());
 
+	urlcfg.reload();
 	REQUIRE(urlcfg.get_urls().size() == combinedUrls.size());
 
 	for (const auto& feed_url : urlcfg.get_urls()) {
@@ -307,7 +319,8 @@ TEST_CASE("import() skips URLs that are already present in UrlReader",
 
 TEST_CASE("import() tags from category attribute", "[Opml]")
 {
-	FileUrlReader urlcfg;
+	test_helpers::TempFile urlsFile;
+	FileUrlReader urlcfg(urlsFile.get_path());
 	const auto path =
 		"file:/"_path // `Filepath` will append an extra slash
 		.join(utils::getcwd())
@@ -315,6 +328,7 @@ TEST_CASE("import() tags from category attribute", "[Opml]")
 	REQUIRE_NOTHROW(opml::import(path, urlcfg));
 
 	const std::vector<std::string> tags{"tag one", "tag_two", "tag/three"};
+	urlcfg.reload();
 	const auto& urls = urlcfg.get_urls();
 	REQUIRE(urls.size() == 1);
 	REQUIRE(urlcfg.get_entry(urls[0].url)->tags == tags);
@@ -355,6 +369,97 @@ TEST_CASE("import() returns an error when the <body> element is missing", "[Opml
 		"the <body> element in the <opml> root element is missing");
 }
 
+TEST_CASE("import() skips verbatim exec: URLs", "[Opml]")
+{
+	test_helpers::TempFile urlsFile;
+
+	FileUrlReader urlcfg(urlsFile.get_path());
+	urlcfg.reload();
+
+	const auto path =
+		"file:/"_path // `Filepath` will append an extra slash
+		.join(utils::getcwd())
+		.join("data/with_verbatim_exec_url.opml"_path);
+	REQUIRE_NOTHROW(opml::import(path, urlcfg));
+
+	urlcfg.reload();
+	const auto urls = urlcfg.get_urls();
+	REQUIRE(urls.size() == 1);
+	REQUIRE(urls[0].url == "https://example.com/feed.atom");
+	const std::vector<std::string> expected_feed_tags({ "~Normal feed", "tagged" });
+	REQUIRE(urls[0].tags == expected_feed_tags);
+	const std::vector<std::string> expected_alltags({ "tagged" });
+	REQUIRE(urlcfg.get_alltags() == expected_alltags);
+}
+
+TEST_CASE("import() skips verbatim filter: URLs", "[Opml]")
+{
+	test_helpers::TempFile urlsFile;
+
+	FileUrlReader urlcfg(urlsFile.get_path());
+	urlcfg.reload();
+
+	const auto path =
+		"file:/"_path // `Filepath` will append an extra slash
+		.join(utils::getcwd())
+		.join("data/with_verbatim_filter_url.opml"_path);
+	REQUIRE_NOTHROW(opml::import(path, urlcfg));
+
+	urlcfg.reload();
+	const auto urls = urlcfg.get_urls();
+	REQUIRE(urls.size() == 1);
+	REQUIRE(urls[0].url == "https://example.com/feed.atom");
+	const std::vector<std::string> expected_feed_tags({ "~Normal feed", "tagged" });
+	REQUIRE(urls[0].tags == expected_feed_tags);
+	const std::vector<std::string> expected_alltags({ "tagged" });
+	REQUIRE(urlcfg.get_alltags() == expected_alltags);
+}
+
+TEST_CASE("import() skips verbatim query: URLs", "[Opml]")
+{
+	test_helpers::TempFile urlsFile;
+
+	FileUrlReader urlcfg(urlsFile.get_path());
+	urlcfg.reload();
+
+	const auto path =
+		"file:/"_path // `Filepath` will append an extra slash
+		.join(utils::getcwd())
+		.join("data/with_verbatim_query_url.opml"_path);
+	REQUIRE_NOTHROW(opml::import(path, urlcfg));
+
+	urlcfg.reload();
+	const auto urls = urlcfg.get_urls();
+	REQUIRE(urls.size() == 1);
+	REQUIRE(urls[0].url == "https://example.com/feed.atom");
+	const std::vector<std::string> expected_feed_tags({ "~Normal feed", "tagged" });
+	REQUIRE(urls[0].tags == expected_feed_tags);
+	const std::vector<std::string> expected_alltags({ "tagged" });
+	REQUIRE(urlcfg.get_alltags() == expected_alltags);
+}
+
+TEST_CASE("import() skips URLs with unsupported schemas", "[Opml]")
+{
+	test_helpers::TempFile urlsFile;
+
+	FileUrlReader urlcfg(urlsFile.get_path());
+	urlcfg.reload();
+
+	const auto path =
+		"file:/"_path // `Filepath` will append an extra slash
+		.join(utils::getcwd())
+		.join("data/with_unsupported_schemas.opml"_path);
+	REQUIRE_NOTHROW(opml::import(path, urlcfg));
+
+	urlcfg.reload();
+	const auto urls = urlcfg.get_urls();
+	REQUIRE(urls.size() == 1);
+	REQUIRE(urls[0].url == "https://example.com/feed.atom");
+	std::vector<std::string> expected_tags({ "~Normal feed" });
+	REQUIRE(urls[0].tags == expected_tags);
+	REQUIRE(urlcfg.get_alltags().empty());
+}
+
 // falls back to "url" if "xmlUrl" is absent
 
 // skips an entry if xmlUrl/url is absent
@@ -366,7 +471,9 @@ TEST_CASE("import() returns an error when the <body> element is missing", "[Opml
 //		type="rss"
 //		filtercmd="~/.bin/keep_interesting.pl"
 //		xmlUrl="|~/.bin/fetch_tweets.py" />
-// Urls file:
-// filter:~/.bin/keep_interesing.pl:exec:~/.bin/fetch_tweets.py
+// For security, OPML import no longer converts pipe-prefixed xmlUrl
+// values into `exec:` URLs (the outline above is skipped) and no longer
+// honours the `filtercmd` attribute. Users who need these can add the
+// equivalent `exec:`/`filter:` entries to their urls file manually.
 
 // ignores <outline> without title/text

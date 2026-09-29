@@ -1,5 +1,6 @@
 #include "utils.h"
 
+#include <cctype>
 #include <cinttypes>
 #include <cstdio>
 #include <cstdlib>
@@ -47,6 +48,28 @@ GCRY_THREAD_OPTION_PTHREAD_IMPL;
 using HTTPMethod = newsboat::utils::HTTPMethod;
 
 namespace newsboat {
+
+bool utils::contains_control_characters(std::string_view str)
+{
+	for (const unsigned char c : str) {
+		if (std::iscntrl(c)) {
+			return true;
+		}
+	}
+	return false;
+}
+
+std::string utils::replace_control_characters(std::string_view str,
+	char replacement)
+{
+	std::string result(str);
+	for (char& c : result) {
+		if (std::iscntrl(static_cast<unsigned char>(c))) {
+			c = replacement;
+		}
+	}
+	return result;
+}
 
 std::string utils::strip_comments(const std::string& line)
 {
@@ -534,6 +557,11 @@ std::string utils::censor_url(const std::string& url)
 	return std::string(utils::bridged::censor_url(url));
 }
 
+std::string utils::sanitize_url(const std::string& url)
+{
+	return std::string(utils::bridged::sanitize_url(url));
+}
+
 void utils::trim(std::string& str)
 {
 	str = std::string(utils::bridged::trim(str));
@@ -923,6 +951,16 @@ void utils::wait_for_keypress()
 	timeout(-1); // Make getch wait indefinitely
 	getch();
 	endwin(); // Restore terminal settings
+}
+
+bool utils::is_file_url(std::string_view url)
+{
+	return url.substr(0, 7) == "file://";
+}
+
+bool utils::has_supported_url_schema(const std::string& url)
+{
+	return is_http_url(url) || is_file_url(url);
 }
 
 } // namespace newsboat

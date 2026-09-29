@@ -34,6 +34,9 @@ enum class HTTPMethod {
 };
 
 std::string strip_comments(const std::string& line);
+bool contains_control_characters(std::string_view str);
+std::string replace_control_characters(std::string_view str,
+	char replacement = '_');
 std::vector<std::string> tokenize(const std::string& str,
 	std::string delimiters = " \r\n\t");
 std::vector<std::string> tokenize_spaced(const std::string& str,
@@ -115,6 +118,7 @@ std::string join(const std::vector<std::string>& strings,
 	const std::string& separator);
 
 std::string censor_url(const std::string& url);
+std::string sanitize_url(const std::string& url);
 
 void trim_end(std::string& str);
 
@@ -191,6 +195,9 @@ std::string mt_strf_localtime(const std::string& format, time_t t);
 std::string preserve_quotes(const std::string& s);
 
 void wait_for_keypress();
+
+bool is_file_url(std::string_view url);
+bool has_supported_url_schema(const std::string& url);
 }
 
 } // namespace newsboat

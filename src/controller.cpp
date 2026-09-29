@@ -710,7 +710,7 @@ void Controller::replace_feed(RssFeed& oldfeed, RssFeed& newfeed, unsigned int p
 	LOG(Level::DEBUG,
 		"Controller::replace_feed: after internalize_rssfeed");
 
-	auto* feed_url = urlcfg->get_entry(oldfeed.rssurl());
+	const auto* feed_url = urlcfg->get_entry(oldfeed.rssurl());
 	if (feed_url != nullptr) {
 		feed->set_tags(feed_url->tags);
 	}
@@ -732,6 +732,10 @@ void Controller::replace_feed(RssFeed& oldfeed, RssFeed& newfeed, unsigned int p
 		case EnqueueStatus::QUEUE_FILE_OPEN_ERROR:
 			v->get_statusline().show_error(
 				strprintf::fmt(_("Failed to open queue file: %s."), result.extra_filename));
+			break;
+		case EnqueueStatus::INVALID_ENQUEUE_DATA:
+			v->get_statusline().show_error(
+				_("Item has a non-HTTP enclosure URL."));
 			break;
 		}
 	}

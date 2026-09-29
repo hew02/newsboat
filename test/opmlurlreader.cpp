@@ -206,3 +206,161 @@ TEST_CASE("OpmlUrlReader::reload() skips things that can't be parsed",
 	tags.insert(alltags.cbegin(), alltags.cend());
 	REQUIRE(tags == expected_tags);
 }
+
+TEST_CASE("reload() skips URLs that start with a pipe symbol (\"|\") instead of "
+	"turning them into `exec:` URLs",
+	"[OpmlUrlReader]")
+{
+	const auto cwd = utils::getcwd();
+
+	ConfigContainer cfg;
+	cfg.set_configvalue("opml-url", "file://" + cwd.to_locale_string() + "/data/piped.opml");
+
+	OpmlUrlReader reader(cfg, Filepath());
+
+	REQUIRE_NOTHROW(reader.reload());
+
+	const auto actual_urls = reader.get_urls();
+	REQUIRE(actual_urls.size() == 1);
+	REQUIRE(actual_urls[0].url == "https://example.com/feed.atom");
+	const std::set<std::string> expected_tags {
+		"~example.com website (Atom feed)", "tagged"
+	};
+	const auto actual_tags = actual_urls[0].tags;
+	REQUIRE(actual_tags.size() == expected_tags.size());
+	for (const auto& tag : actual_tags) {
+		REQUIRE(expected_tags.find(tag) != std::end(expected_tags));
+	}
+
+	const auto alltags = reader.get_alltags();
+	REQUIRE(alltags == std::vector<std::string>({"tagged"}));
+}
+
+TEST_CASE("reload() ignores `filtercmd` attribute and adds the URL as a regular feed",
+	"[OpmlUrlReader]")
+{
+	const auto cwd = utils::getcwd();
+
+	ConfigContainer cfg;
+	cfg.set_configvalue("opml-url",
+		"file://" + cwd.to_locale_string() + "/data/filtered.opml");
+
+	OpmlUrlReader reader(cfg, Filepath());
+
+	REQUIRE_NOTHROW(reader.reload());
+
+	using URL = std::string;
+	using Tag = std::string;
+	using Tags = std::vector<Tag>;
+	const std::map<URL, Tags> expected {
+		{"https://example.com/another_feed.atom", {"~example.com website (Atom feed)", "misc"}},
+		{"https://example.com/firehose", {"~Firehose"}},
+	};
+
+	REQUIRE(reader.get_urls().size() == expected.size());
+
+	for (const auto& feed : reader.get_urls()) {
+		INFO("url = " << feed.url);
+
+		const auto e = expected.find(feed.url);
+		REQUIRE(e != expected.cend());
+
+		REQUIRE(feed.tags == e->second);
+	}
+
+	std::set<Tag> expected_tags;
+	for (const auto& entry : expected) {
+		for (const auto& tag : entry.second) {
+			if (tag[0] != '~') {
+				expected_tags.insert(tag);
+			}
+		}
+	}
+	std::set<Tag> tags;
+	const auto alltags = reader.get_alltags();
+	tags.insert(alltags.cbegin(), alltags.cend());
+	REQUIRE(tags == expected_tags);
+}
+
+TEST_CASE("reload() ignores exec: URLs", "[OpmlUrlReader]")
+{
+	const auto cwd = utils::getcwd();
+
+	ConfigContainer cfg;
+	cfg.set_configvalue("opml-url",
+		"file://" + cwd.to_locale_string() + "/data/with_verbatim_exec_url.opml");
+
+	OpmlUrlReader reader(cfg, Filepath());
+
+	REQUIRE_NOTHROW(reader.reload());
+
+	const auto urls = reader.get_urls();
+	REQUIRE(urls.size() == 1);
+	REQUIRE(urls[0].url == "https://example.com/feed.atom");
+	const std::vector<std::string> expected_feed_tags({ "~Normal feed", "tagged" });
+	REQUIRE(urls[0].tags == expected_feed_tags);
+	const std::vector<std::string> expected_alltags({ "tagged" });
+	REQUIRE(reader.get_alltags() == expected_alltags);
+}
+
+TEST_CASE("reload() ignores filter: URLs", "[OpmlUrlReader]")
+{
+	const auto cwd = utils::getcwd();
+
+	ConfigContainer cfg;
+	cfg.set_configvalue("opml-url",
+		"file://" + cwd.to_locale_string() + "/data/with_verbatim_filter_url.opml");
+
+	OpmlUrlReader reader(cfg, Filepath());
+
+	REQUIRE_NOTHROW(reader.reload());
+
+	const auto urls = reader.get_urls();
+	REQUIRE(urls.size() == 1);
+	REQUIRE(urls[0].url == "https://example.com/feed.atom");
+	const std::vector<std::string> expected_feed_tags({ "~Normal feed", "tagged" });
+	REQUIRE(urls[0].tags == expected_feed_tags);
+	const std::vector<std::string> expected_alltags({ "tagged" });
+	REQUIRE(reader.get_alltags() == expected_alltags);
+}
+
+TEST_CASE("reload() ignores query: URLs", "[OpmlUrlReader]")
+{
+	const auto cwd = utils::getcwd();
+
+	ConfigContainer cfg;
+	cfg.set_configvalue("opml-url",
+		"file://" + cwd.to_locale_string() + "/data/with_verbatim_query_url.opml");
+
+	OpmlUrlReader reader(cfg, Filepath());
+
+	REQUIRE_NOTHROW(reader.reload());
+
+	const auto urls = reader.get_urls();
+	REQUIRE(urls.size() == 1);
+	REQUIRE(urls[0].url == "https://example.com/feed.atom");
+	const std::vector<std::string> expected_feed_tags({ "~Normal feed", "tagged" });
+	REQUIRE(urls[0].tags == expected_feed_tags);
+	const std::vector<std::string> expected_alltags({ "tagged" });
+	REQUIRE(reader.get_alltags() == expected_alltags);
+}
+
+TEST_CASE("reload() ignores URLs with unsupported schemas", "[OpmlUrlReader]")
+{
+	const auto cwd = utils::getcwd();
+
+	ConfigContainer cfg;
+	cfg.set_configvalue("opml-url",
+		"file://" + cwd.to_locale_string() + "/data/with_unsupported_schemas.opml");
+
+	OpmlUrlReader reader(cfg, Filepath());
+
+	REQUIRE_NOTHROW(reader.reload());
+
+	const auto urls = reader.get_urls();
+	REQUIRE(urls.size() == 1);
+	REQUIRE(urls[0].url == "https://example.com/feed.atom");
+	std::vector<std::string> expected_tags({ "~Normal feed" });
+	REQUIRE(urls[0].tags == expected_tags);
+	REQUIRE(reader.get_alltags().empty());
+}
