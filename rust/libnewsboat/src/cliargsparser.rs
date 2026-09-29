@@ -9,6 +9,12 @@ use crate::logger::Level;
 use crate::utils;
 use strprintf::fmt;
 
+#[derive(Default, Clone)]
+pub struct CmdArgsPair {
+    pub cmd: String,
+    pub args: Vec<String>
+}
+
 #[derive(Default)]
 pub struct CliArgsParser {
     pub do_export: bool,
@@ -74,7 +80,7 @@ pub struct CliArgsParser {
     /// run.
     ///
     /// \note The parser does not check if the passed commands are valid.
-    pub cmds_to_execute: Vec<String>,
+    pub cmds_to_execute: Vec<CmdArgsPair>,
 
     /// If this contains some value, it's the path to the log file specified by the user.
     pub log_file: Option<PathBuf>,
@@ -204,9 +210,35 @@ pub fn parse_cliargs(opts: Vec<OsString>, args: &mut CliArgsParser) -> Result<()
             Long("cleanup") => args.do_cleanup = true,
             Short('v') | Long("version") | Short('V') | Long("-V") => args.show_version += 1,
             Short('x') | Long("execute") => {
-                for cmd in parser.values()? {
-                    args.cmds_to_execute.push(cmd.to_string_lossy().into());
+                let mut it = parser.values()?.peekable();
+                while let Some(value) = it.next() {
+                    let cmd: String = value.to_string_lossy().into();
+                    let mut cmd_and_args = CmdArgsPair {
+                        cmd: cmd.clone(),
+                        args: Vec::new()
+                    };
+
+                    match cmd.as_str() {
+                        "reload" => {
+                            match it.peek() {
+                                Some(arg) => {
+                                    cmd_and_args.args
+                                        .push(arg.to_string_lossy().into());
+                                    it.nth(0);
+                                    args.cmds_to_execute.push(cmd_and_args);
+                                },
+                                None => eprintln!("{} requires a feed index", cmd),
+                            }
+                        },
+                        "print-unread" => args.cmds_to_execute.push(cmd_and_args),
+                        "reload_all" => args.cmds_to_execute.push(cmd_and_args),
+                        _ => {
+                            //eprintln!("Unknown command '{}'", cmd);
+                            return Err(CliParseError::PrintAndExit);
+                        },
+                    }
                 }
+
                 if args.cmds_to_execute.is_empty() {
                     return Err(CliParseError::PrintAndExit);
                 }

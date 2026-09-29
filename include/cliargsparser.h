@@ -80,7 +80,7 @@ public:
 	/// If non-empty, Newsboat should execute these commands and then quit.
 	///
 	/// \note The parser does not check if the passed commands are valid.
-	std::vector<std::string> cmds_to_execute() const;
+	std::vector<std::pair<std::string, std::vector<std::string>>> cmds_to_execute() const;
 
 	std::optional<Filepath> log_file() const;
 

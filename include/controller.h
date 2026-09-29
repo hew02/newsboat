@@ -118,7 +118,8 @@ private:
 	int import_opml(const Filepath& opmlFile, const Filepath& urlFile);
 	void export_opml(bool version2);
 	void rec_find_rss_outlines(xmlNode* node, std::string tag);
-	int execute_commands(const std::vector<std::string>& cmds);
+	int execute_commands(
+		const std::vector<std::pair<std::string, std::vector<std::string>>>& cmd_args_pairs);
 
 	void import_read_information(const Filepath& readinfofile);
 	void export_read_information(const Filepath& readinfofile);

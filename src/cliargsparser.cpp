@@ -180,17 +180,27 @@ std::optional<Filepath> CliArgsParser::cmdline_history_file() const
 	return std::nullopt;
 }
 
-std::vector<std::string> CliArgsParser::cmds_to_execute()
+std::vector<std::pair<std::string, std::vector<std::string>>> CliArgsParser::cmds_to_execute()
 const
 {
-	const auto rs_cmds = newsboat::cliargsparser::bridged::cmds_to_execute(
+	const auto rs_cmd_args_pairs = newsboat::cliargsparser::bridged::cmds_to_execute(
 			*rs_object);
 
-	std::vector<std::string> cmds;
-	for (const auto& cmd : rs_cmds) {
-		cmds.push_back(std::string(cmd));
+	std::vector<std::pair<std::string, std::vector<std::string>>> cmds_args_pairs;
+	for (const auto& pair: rs_cmd_args_pairs) {
+    const auto rs_cmd =
+        newsboat::cliargsparser::bridged::cmd(pair);
+    const auto rs_args =
+        newsboat::cliargsparser::bridged::args(pair);
+
+		std::vector<std::string> args;
+		for (const auto& arg: rs_args) {
+			args.push_back(std::string(arg));
+		}
+
+		cmds_args_pairs.push_back(std::pair(std::string(rs_cmd), args));
 	}
-	return cmds;
+	return cmds_args_pairs;
 }
 
 std::optional<Filepath> CliArgsParser::log_file() const

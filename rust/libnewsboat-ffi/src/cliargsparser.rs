@@ -15,6 +15,13 @@ unsafe impl ExternType for CliArgsParser {
     type Kind = cxx::kind::Opaque;
 }
 
+pub struct CmdArgsPair(pub cliargsparser::CmdArgsPair);
+
+unsafe impl ExternType for CmdArgsPair {
+    type Id = type_id!("newsboat::cliargsparser::bridged::CmdArgsPair");
+    type Kind = cxx::kind::Opaque;
+}
+
 #[cxx::bridge(namespace = "newsboat::cliargsparser::bridged")]
 mod bridged {
     #[namespace = "newsboat::filepath::bridged"]
@@ -32,6 +39,7 @@ mod bridged {
 
     extern "Rust" {
         type CliArgsParser;
+        type CmdArgsPair;
 
         fn create(argv: Vec<BytesVec>) -> Box<CliArgsParser>;
 
@@ -66,7 +74,9 @@ mod bridged {
         -> bool;
         fn log_file(cliargsparser: &CliArgsParser, mut path: Pin<&mut PathBuf>) -> bool;
 
-        fn cmds_to_execute(cliargsparser: &CliArgsParser) -> Vec<String>;
+        fn cmds_to_execute(cliargsparser: &CliArgsParser) -> Vec<CmdArgsPair>;
+        fn cmd(pair: &CmdArgsPair) -> String;
+        fn args(pair: &CmdArgsPair) -> Vec<String>;
 
         fn log_level(cliargsparser: &CliArgsParser, level: &mut i8) -> bool;
     }
@@ -247,8 +257,16 @@ fn log_file(cliargsparser: &CliArgsParser, mut path: Pin<&mut PathBuf>) -> bool 
     }
 }
 
-fn cmds_to_execute(cliargsparser: &CliArgsParser) -> Vec<String> {
-    cliargsparser.0.cmds_to_execute.to_owned()
+fn cmds_to_execute(cliargsparser: &CliArgsParser) -> Vec<CmdArgsPair> {
+    cliargsparser.0.cmds_to_execute.iter().cloned().map(CmdArgsPair).collect()
+}
+
+fn cmd(pair: &CmdArgsPair) -> String {
+    pair.0.cmd.to_owned()
+}
+
+fn args(pair: &CmdArgsPair) -> Vec<String> {
+    pair.0.args.to_owned()
 }
 
 fn log_level(cliargsparser: &CliArgsParser, level: &mut i8) -> bool {

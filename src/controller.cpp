@@ -904,16 +904,36 @@ Filepath Controller::get_urls_file()
 	return configpaths.url_file();
 }
 
-int Controller::execute_commands(const std::vector<std::string>& cmds)
+int Controller::execute_commands(
+		const std::vector<std::pair<std::string, std::vector<std::string>>>& cmd_args_pairs)
 {
 	if (v->formaction_stack_size() > 0) {
 		v->pop_current_formaction();
 	}
-	for (const auto& cmd : cmds) {
+	for (const auto& cmd_and_args : cmd_args_pairs) {
+		std::string cmd = cmd_and_args.first;
+		std::vector<std::string> args = cmd_and_args.second;
+
 		LOG(Level::DEBUG,
 			"Controller::execute_commands: executing `%s'",
 			cmd);
 		if (cmd == "reload") {
+			// TODO accept multiple inputs?
+			int feed_index;
+			std::string first_arg = args.front();
+			try {
+		 		feed_index = std::stoi(first_arg);
+			} catch (const std::invalid_argument&) {
+				std::cerr
+						<< strprintf::fmt(_("%s: %s: the index value '%s' is not valid"),
+								"newsboat",
+								cmd,
+								first_arg)
+							<< std::endl;
+				return EXIT_FAILURE;
+			}
+			reloader->reload(feed_index, true);
+		} else if (cmd == "reload_all") {
 			reloader->reload_all(true);
 		} else if (cmd == "print-unread") {
 			std::cout << strprintf::fmt(_("%u unread articles"),
